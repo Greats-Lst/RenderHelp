@@ -1258,6 +1258,9 @@ public:
 			
 			// 这里图简单，当一个点越界，立马放弃整个三角形，更精细的做法是
 			// 如果越界了就在齐次空间内进行裁剪，拆分为 0-2 个三角形然后继续
+			
+			// ps：Vertex Shader的输出就是在Clip Space上（注意 裁剪空间和齐次空间的区别？可能裁剪空间还没除以w，齐次空间已经除以w了），
+			// 那么首先我们要知道在齐次空间是需要可显示的点处于[-1,1]区间内的（不管x/y/z），那么就需要x/w在区间[-1,1]内（y和z类推），所以最终得到{ x/w<=1 && x/w>=-1 } => { x<=w && x>=-w  }
 			if (w == 0.0f) return false;
 			if (vertex.pos.z < 0.0f || vertex.pos.z > w) return false;
 			if (vertex.pos.x < -w || vertex.pos.x > w) return false;
