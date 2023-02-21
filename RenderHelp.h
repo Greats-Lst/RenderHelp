@@ -1274,7 +1274,7 @@ public:
 
 			// 计算屏幕坐标
 			vertex.spf.x = (vertex.pos.x + 1.0f) * _fb_width * 0.5f;
-			vertex.spf.y = (1.0f - vertex.pos.y) * _fb_height * 0.5f;
+			vertex.spf.y = (1.0f - vertex.pos.y) * _fb_height * 0.5f; // Issue1:将y从[-1,1]转换到[1,0]的算法，但是我现在改为从[-1,1]转换到[0,1]之后sample01的三角形并没有变成倒三角形啊
 
 			// 整数屏幕坐标：加 0.5 的偏移取屏幕像素方格中心对齐
 			vertex.spi.x = (int)(vertex.spf.x + 0.5f);
@@ -1338,20 +1338,34 @@ public:
 		// 迭代三角形外接矩形的所有点
 		for (int cy = _min_y; cy <= _max_y; cy++) {
 			for (int cx = _min_x; cx <= _max_x; cx++) {
+
 				Vec2f px = { (float)cx + 0.5f, (float)cy + 0.5f };
 
-				// Edge Equation
-				// 使用整数避免浮点误差，同时因为是左手系，所以符号取反
-				int E01 = -(cx - p0.x) * (p1.y - p0.y) + (cy - p0.y) * (p1.x - p0.x);
-				int E12 = -(cx - p1.x) * (p2.y - p1.y) + (cy - p1.y) * (p2.x - p1.x);
-				int E20 = -(cx - p2.x) * (p0.y - p2.y) + (cy - p2.y) * (p0.x - p2.x);
+#pragma region Edge Equation
+				//// Edge Equation
+				//// 使用整数避免浮点误差，同时因为是左手系，所以符号取反
+				//int E01 = -(cx - p0.x) * (p1.y - p0.y) + (cy - p0.y) * (p1.x - p0.x);
+				//int E12 = -(cx - p1.x) * (p2.y - p1.y) + (cy - p1.y) * (p2.x - p1.x);
+				//int E20 = -(cx - p2.x) * (p0.y - p2.y) + (cy - p2.y) * (p0.x - p2.x);
 
+				//// 如果是左上边，用 E >= 0 判断合法，如果右下边就用 E > 0 判断合法
+				//// 这里通过引入一个误差 1 ，来将 < 0 和 <= 0 用一个式子表达
+				//if (E01 < (TopLeft01? 0 : 1)) continue;   // 在第一条边后面
+				//if (E12 < (TopLeft12? 0 : 1)) continue;   // 在第二条边后面
+				//if (E20 < (TopLeft20? 0 : 1)) continue;   // 在第三条边后面
+#pragma endregion
 
-				// 如果是左上边，用 E >= 0 判断合法，如果右下边就用 E > 0 判断合法
-				// 这里通过引入一个误差 1 ，来将 < 0 和 <= 0 用一个式子表达
-				if (E01 < (TopLeft01? 0 : 1)) continue;   // 在第一条边后面
-				if (E12 < (TopLeft12? 0 : 1)) continue;   // 在第二条边后面
-				if (E20 < (TopLeft20? 0 : 1)) continue;   // 在第三条边后面
+#pragma region My Edge Equation
+				// A = (y0 - y1) / B = (x1 - x0) / C = x0 * y1 - x1 * y0 
+				// 相应的知识点url:https_groups.csail.mit.edu/?url=https%3A%2F%2Fgroups.csail.mit.edu%2Fgraphics%2Fclasses%2F6.837%2FF98%2FLecture7%2Ftriangles.html
+				int E01 = (p0.y - p1.y) * cx + (p1.x - p0.x) * cy + p0.x * p1.y - p1.x * p0.y;
+				int E12 = (p1.y - p2.y) * cx + (p2.x - p1.x) * cy + p1.x * p2.y - p2.x * p1.y;
+				int E20 = (p2.y - p0.y) * cx + (p0.x - p2.x) * cy + p2.x * p0.y - p0.x * p2.y;
+
+				if (E01 < 0) continue;
+				if (E12 < 0) continue;
+				if (E20 < 0) continue;
+#pragma endregion
 
 				// 三个端点到当前点的矢量
 				Vec2f s0 = vtx[0]->spf - px;
