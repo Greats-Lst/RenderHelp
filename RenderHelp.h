@@ -1386,6 +1386,9 @@ public:
 				c = c * (1.0f / s);
 
 				// 计算当前点的 1/w，因 1/w 和屏幕空间呈线性关系，故直接重心插值
+				// 知识点为“透视矫正插值”，详见 https://zhuanlan.zhihu.com/p/144331875
+				// 起因是view space两点的插值和screen space对应两点的插值之间的比例不同
+				// 注意这里并没有对三角形以外，外接矩形以内的部分进行插值，因为该部分在Edge Equation时被剔除了
 				float rhw = vtx[0]->rhw * a + vtx[1]->rhw * b + vtx[2]->rhw * c;
 
 				// 进行深度测试
@@ -1397,6 +1400,8 @@ public:
 
 				// 计算三个顶点插值 varying 的系数
 				// 先除以各自顶点的 w 然后进行屏幕空间插值然后再乘以当前 w
+				// 依旧是透视矫正插值，只不过这里不是使用线性插值，而是使用重心插值，预先计算各点对应的插值参数
+				// 详见 https://zhuanlan.zhihu.com/p/144331875 式(16)
 				float c0 = vtx[0]->rhw * a * w;
 				float c1 = vtx[1]->rhw * b * w;
 				float c2 = vtx[2]->rhw * c * w;
