@@ -1,0 +1,13 @@
+gcc -O2 sample_01_triangle.cpp -o sample_01_triangle -lstdc++
+
+gcc -O2 sample_02_texture.cpp -o sample_02_texture -lstdc++
+
+gcc -O2 sample_03_box.cpp -o sample_03_box -lstdc++
+
+gcc -O2 sample_04_gouraud.cpp -o sample_04_gouraud -lstdc++
+
+gcc -O2 sample_05_model.cpp -o sample_05_model -lstdc++
+
+gcc -O2 sample_06_normal.cpp -o sample_06_normal -lstdc++
+
+gcc -O2 sample_07_specular.cpp -o sample_07_specular -lstdc++
